@@ -14,7 +14,7 @@ on:
 env:
   # Ortam değişkeniyle sabit bir modül verebilirsiniz.
   # Eğer bu boşsa, Git değişikliklerinden otomatik tespit edilir.
-  TARGET_MODULE: "amazon_invoice_upload"
+  TARGET_MODULE: "google_calendar"
 
 jobs:
   # ─────────────────────────────────────────
