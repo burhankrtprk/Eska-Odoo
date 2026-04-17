@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_delivery_carrier_form_inherit_aras" model="ir.ui.view">
+        <field name="name">delivery.carrier.form.inherit.aras</field>
+        <field name="model">delivery.carrier</field>
+        <field name="inherit_id" ref="delivery.view_delivery_carrier_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/sheet/notebook" position="inside">
+                <page string="Aras Kargo Configuration" name="aras_configuration"
+                      invisible="delivery_type != 'aras'">
+                    <group>
+                        <group string="Credentials" groups="base.group_system">
+                            <field name="aras_username"
+                                   required="delivery_type == 'aras'"
+                                   groups="base.group_system"/>
+                            <field name="aras_password"
+                                   required="delivery_type == 'aras'"
+                                   password="True"
+                                   groups="base.group_system"/>
+                            <field name="aras_customer_code"
+                                   required="delivery_type == 'aras'"
+                                   groups="base.group_system"/>
+                        </group>
+                        <group string="Shipment Defaults">
+                            <field name="aras_sender_address_id"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

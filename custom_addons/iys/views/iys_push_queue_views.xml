@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- List view -->
+        <record id="view_iys_push_queue_list" model="ir.ui.view">
+            <field name="name">iys.push.queue.list</field>
+            <field name="model">iys.push.queue</field>
+            <field name="arch" type="xml">
+                <list string="IYS Push Queue"
+                      decoration-danger="state == 'failed'"
+                      decoration-success="state == 'done'"
+                      decoration-muted="state == 'pending' and retry_count > 0">
+                    <field name="create_date" string="Queued At"/>
+                    <field name="partner_id"/>
+                    <field name="state" widget="badge"
+                           decoration-success="state == 'done'"
+                           decoration-danger="state == 'failed'"
+                           decoration-info="state == 'pending'"/>
+                    <field name="retry_count"/>
+                    <field name="next_retry"
+                           invisible="state != 'pending'"/>
+                    <field name="last_error" optional="hide"/>
+                </list>
+            </field>
+        </record>
+
+        <!-- Form view -->
+        <record id="view_iys_push_queue_form" model="ir.ui.view">
+            <field name="name">iys.push.queue.form</field>
+            <field name="model">iys.push.queue</field>
+            <field name="arch" type="xml">
+                <form string="IYS Push Queue Item">
+                    <header>
+                        <button name="action_retry_now"
+                                string="Retry Now"
+                                type="object"
+                                class="btn-primary"
+                                invisible="state == 'done'"/>
+                        <field name="state" widget="statusbar"
+                               statusbar_visible="pending,done,failed"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group string="Request">
+                                <field name="partner_id"/>
+                                <field name="create_date" string="Queued At" readonly="1"/>
+                                <field name="retry_count" readonly="1"/>
+                                <field name="next_retry" readonly="1"/>
+                            </group>
+                            <group string="Result">
+                                <field name="state" readonly="1"/>
+                                <field name="last_error" widget="text" readonly="1"/>
+                            </group>
+                        </group>
+                        <group string="Payload">
+                            <field name="payload" widget="code" readonly="1" nolabel="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Search view -->
+        <record id="view_iys_push_queue_search" model="ir.ui.view">
+            <field name="name">iys.push.queue.search</field>
+            <field name="model">iys.push.queue</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="partner_id"/>
+                    <filter name="pending" string="Pending" domain="[('state','=','pending')]"/>
+                    <filter name="failed"  string="Failed"  domain="[('state','=','failed')]"/>
+                    <filter name="done"    string="Sent"    domain="[('state','=','done')]"/>
+                </search>
+            </field>
+        </record>
+
+        <!-- Window action -->
+        <record id="action_iys_push_queue" model="ir.actions.act_window">
+            <field name="name">IYS Push Queue</field>
+            <field name="res_model">iys.push.queue</field>
+            <field name="view_mode">list,form</field>
+            <field name="search_view_id" ref="view_iys_push_queue_search"/>
+            <field name="context">{'search_default_pending': 1}</field>
+        </record>
+
+        <!-- Menu -->
+        <menuitem id="menu_iys_root"
+                  name="IYS"
+                  parent="base.menu_administration"
+                  sequence="98"/>
+        <menuitem id="menu_iys_push_queue"
+                  name="Push Queue"
+                  parent="menu_iys_root"
+                  action="action_iys_push_queue"
+                  sequence="10"/>
+
+    </data>
+</odoo>

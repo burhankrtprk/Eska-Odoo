@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_aras_shipping_label" model="ir.actions.report">
+        <field name="name">Aras Shipping Label</field>
+        <field name="model">stock.picking</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">aras_delivery_integration.report_aras_shipping_label</field>
+        <field name="report_file">aras_delivery_integration.report_aras_shipping_label</field>
+        <field name="print_report_name">'Aras_Shipping_Label_%s' % (object.name)</field>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="base.paperformat_euro"/>
+    </record>
+
+    <template id="report_aras_shipping_label">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <t t-set="base_barcode" t-value="o.aras_integration_code if o.aras_integration_code else (o.carrier_tracking_ref if o.carrier_tracking_ref else str(o.id).zfill(16))"/>
+                    <t t-set="packages" t-value="o.move_line_ids.mapped('result_package_id')"/>
+                    <t t-set="pkg_total" t-value="len(packages) if packages else 1"/>
+                    <t t-set="iterable_items" t-value="packages if packages else [1]"/>
+
+                    <t t-foreach="iterable_items" t-as="pkg">
+                        <t t-set="current_idx" t-value="pkg_index + 1 if packages else 1"/>
+                        <t t-set="pkg_barcode" t-value="base_barcode + str(current_idx).zfill(2)"/>
+
+                        <div class="page" t-att-style="'page-break-before: always;' if current_idx > 1 else ''">
+                            <div style="width: 100%; max-width: 500px; margin: 0 auto; font-family: Arial, sans-serif; font-size: 15px; color: #000;">
+                                <table style="width: 100%; border: 3px solid #b3b3b3; border-collapse: collapse;">
+
+                                    <tr>
+                                        <td colspan="2" style="border-bottom: 2px solid #b3b3b3; padding: 10px;">
+                                            <div style="float: left;">
+                                                <strong>Sender:</strong>
+                                                <span t-field="o.company_id.name"/>
+                                            </div>
+                                            <div style="float: right;">
+                                                <strong>
+                                                    <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d.%m.%Y')"/>
+                                                </strong>
+                                            </div>
+                                            <div style="clear: both;"/>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="2" style="border-bottom: 2px solid #b3b3b3; padding: 10px;">
+                                            <strong>Recipient Information</strong>
+                                            <br/>
+                                            <div style="margin-top: 5px; font-weight: bold; line-height: 1.4;">
+                                                <div>
+                                                    Name:
+                                                    <span t-field="o.partner_id.name"/>
+                                                </div>
+                                                <div>
+                                                    Phone:
+                                                    <span t-field="o.partner_id.phone"/>
+                                                </div>
+                                                <div>
+                                                    Address:
+                                                    <span t-field="o.partner_id.street"/>
+                                                    <span t-field="o.partner_id.city"/>
+                                                    /
+                                                    <span t-field="o.partner_id.state_id.name"/>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="2" style="border-bottom: 2px solid #b3b3b3; padding: 10px; font-size: 16px;">
+                                            <t t-if="o.aras_is_cod">
+                                                <strong>
+                                                    Cash on Delivery /
+                                                    <span t-field="o.aras_cod_type"/>
+                                                </strong>
+                                                <strong style="float: right;">
+                                                    COD Amount:
+                                                    <span t-field="o.aras_cod_amount"/>
+                                                    TL
+                                                </strong>
+                                            </t>
+                                            <t t-else="">
+                                                <strong>Standard Shipment</strong>
+                                            </t>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td colspan="2" style="border-bottom: 2px solid #b3b3b3; padding: 10px;">
+                                            <strong>
+                                                Integration Code:
+                                                <t t-esc="base_barcode"/>
+                                            </strong>
+                                            <br/>
+                                            <img t-att-src="'/report/barcode/?barcode_type=Code128&amp;value=%s&amp;width=300&amp;height=50' % base_barcode"
+                                                 style="width: 300px; height: 50px; margin-top: 5px;" alt="Main Barcode"/>
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td style="padding: 10px;">
+                                            <strong>
+                                                Package Barcode:
+                                                <t t-esc="pkg_barcode"/>
+                                            </strong>
+                                            <br/>
+                                            <img t-att-src="'/report/barcode/?barcode_type=Code128&amp;value=%s&amp;width=300&amp;height=50' % pkg_barcode"
+                                                 style="width: 300px; height: 50px; margin-top: 5px;" alt="Sub Barcode"/>
+                                        </td>
+                                        <td style="padding: 10px; vertical-align: bottom; text-align: right; font-size: 18px;">
+                                            <strong>
+                                                Package:
+                                                <t t-esc="current_idx"/>
+                                                /
+                                                <t t-esc="pkg_total"/>
+                                            </strong>
+                                        </td>
+                                    </tr>
+
+                                </table>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

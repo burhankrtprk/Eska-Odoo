@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- res.partner form -->
+        <record id="view_partner_form_iys" model="ir.ui.view">
+            <field name="name">res.partner.form.iys</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+
+                <!-- IYS tab skeleton -->
+                <xpath expr="//notebook" position="inside">
+                    <page name="iys_consent" string="IYS Consent">
+                        <group>
+                            <group string="Audit">
+                                <field name="iys_consent_date"/>
+                                <field name="iys_last_push_date" readonly="1"/>
+                                <field name="verimor_mobile" readonly="1"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

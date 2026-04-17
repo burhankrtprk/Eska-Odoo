@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Adds SMS consent row into the IYS Consent tab-->
+        <record id="view_partner_form_iys_sms_consent" model="ir.ui.view">
+            <field name="name">res.partner.form.iys.sms.consent</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="iys.view_partner_form_iys"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@name='iys_consent']/group" position="before">
+                    <group string="SMS">
+                        <field name="iys_sms_consent" widget="radio" nolabel="1"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

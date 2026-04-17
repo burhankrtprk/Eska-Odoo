@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_picking_form_inherit_aras" model="ir.ui.view">
+        <field name="name">stock.picking.form.inherit.aras</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock.view_picking_form"/>
+        <field name="arch" type="xml">
+
+            <xpath expr="//header" position="inside">
+                <button name="action_cancel_aras_shipment"
+                        type="object"
+                        string="Cancel Aras Shipment"
+                        class="btn-secondary"
+                        invisible="delivery_type != 'aras' or not aras_integration_code"
+                        confirm="Are you sure you want to cancel this shipment?"/>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Aras Kargo Details" name="aras_info"
+                      invisible="delivery_type != 'aras'">
+                    <group>
+                        <group string="Status &amp; Tracking">
+                            <field name="aras_integration_code"/>
+                            <field name="aras_delivery_state"
+                                   widget="badge"
+                                   decoration-info="aras_delivery_state in ('at_departure', 'in_transit', 'at_delivery_branch')"
+                                   decoration-warning="aras_delivery_state in ('out_for_delivery', 'partial_delivery', 'redirected')"
+                                   decoration-success="aras_delivery_state == 'delivered'"
+                                   decoration-danger="aras_delivery_state in ('returned', 'canceled')"/>
+                            <field name="aras_sync_pending" readonly="1"/>
+                            <field name="aras_barcode_numbers" readonly="1"/>
+                        </group>
+                        <group string="Delivery Information">
+                            <field name="aras_delivery_person"/>
+                            <field name="aras_delivery_date"/>
+                            <field name="aras_return_reason"
+                                   invisible="aras_delivery_state not in ('returned', 'redirected')"/>
+                            <field name="carrier_total_deci"/>
+                            <field name="carrier_shipping_total"/>
+                        </group>
+                    </group>
+                    <group string="Warning"
+                           invisible="not aras_last_sync_warning">
+                        <field name="aras_last_sync_warning" nolabel="1" readonly="1"/>
+                    </group>
+                    <group string="Cash on Delivery (COD)">
+                        <group>
+                            <field name="aras_is_cod"/>
+                            <field name="aras_cod_amount"
+                                   invisible="not aras_is_cod"
+                                   required="aras_is_cod"/>
+                            <field name="aras_cod_type"
+                                   invisible="not aras_is_cod"
+                                   required="aras_is_cod"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <record id="view_picking_withcarrier_out_form_inherit_aras" model="ir.ui.view">
+        <field name="name">delivery.stock.picking_withcarrier.form.inherit.aras</field>
+        <field name="model">stock.picking</field>
+        <field name="inherit_id" ref="stock_delivery.view_picking_withcarrier_out_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//button[@name='send_to_shipper']" position="attributes">
+                <attribute name="invisible">carrier_tracking_ref or (delivery_type == 'aras' and aras_integration_code) or delivery_type in ['fixed', 'base_on_rule'] or not delivery_type or state != 'done' or picking_type_code == 'incoming'</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

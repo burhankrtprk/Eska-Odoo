@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_iys_consent_user,iys.consent (user),model_iys_consent,base.group_user,1,0,0,0
+access_iys_consent_manager,iys.consent (manager),model_iys_consent,base.group_system,1,1,1,1
+access_iys_push_queue_user,iys.push.queue (user),model_iys_push_queue,base.group_user,1,0,0,0
+access_iys_push_queue_manager,iys.push.queue (manager),model_iys_push_queue,base.group_system,1,1,1,1

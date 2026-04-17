@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_move_form_amazon_new" model="ir.ui.view">
+            <field name="name">account.move.form.amazon.inherit.new</field>
+            <field name="model">account.move</field>
+            <field name="inherit_id" ref="account.view_move_form"/>
+            <field name="arch" type="xml">
+
+                <xpath expr="//header" position="inside">
+                    <button name="action_upload_to_amazon"
+                            string="Upload to Amazon"
+                            type="object"
+                            class="oe_highlight"
+                            invisible="state != 'posted' or amazon_upload_status == 'sent'"/>
+                </xpath>
+
+                <xpath expr="//field[@name='invoice_date']" position="after">
+                    <field name="amazon_order_reference" invisible="not amazon_order_reference"/>
+                    <field name="amazon_upload_status" readonly="1"/>
+                </xpath>
+
+            </field>
+        </record>
+    </data>
+</odoo>
