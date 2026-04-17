@@ -1,5 +1,4 @@
 from odoo import fields, Command
-from odoo.exceptions import AccessError
 from odoo.tests.common import TransactionCase
 
 class TestTokenAccess(TransactionCase):

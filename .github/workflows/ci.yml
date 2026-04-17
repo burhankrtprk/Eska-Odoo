@@ -14,7 +14,11 @@ on:
 env:
   # Ortam değişkeniyle sabit bir modül verebilirsiniz.
   # Eğer bu boşsa, Git değişikliklerinden otomatik tespit edilir.
-  TARGET_MODULE: "google_calendar"
+  TARGET_MODULE: "stock"
+
+  # Modül arama yolları (virgülle ayrılmış).
+  # Yeni bir addons dizini eklemek için buraya eklemeniz yeterli.
+  ADDONS_PATHS: "custom_addons,odoo/addons"
 
 jobs:
   # ─────────────────────────────────────────
@@ -25,6 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       module: ${{ steps.set-module.outputs.module }}
+      module_path: ${{ steps.set-module.outputs.module_path }}
       odoo_version: ${{ steps.set-module.outputs.odoo_version }}
       python_version: ${{ steps.set-module.outputs.python_version }}
     steps:
@@ -38,8 +43,16 @@ jobs:
             MOD="${{ env.TARGET_MODULE }}"
           fi
 
+          # ADDONS_PATHS env'den arama yollarını oku
+          IFS=',' read -ra SEARCH_PATHS <<< "${{ env.ADDONS_PATHS }}"
+
           if [ -z "$MOD" ]; then
-            MOD=$( (git diff --name-only 2>/dev/null; git diff --name-only HEAD~1 HEAD 2>/dev/null) | grep '^custom_addons/' | cut -d '/' -f 2 | sort -u | head -n 1 || true)
+            # Git diff'ten modül adını otomatik tespit et (tüm arama yollarında)
+            DIFF_FILES=$( (git diff --name-only 2>/dev/null; git diff --name-only HEAD~1 HEAD 2>/dev/null) || true)
+            for SPATH in "${SEARCH_PATHS[@]}"; do
+              MOD=$(echo "$DIFF_FILES" | grep "^${SPATH}/" | sed "s|^${SPATH}/||" | cut -d '/' -f 1 | sort -u | head -n 1 || true)
+              [ -n "$MOD" ] && break
+            done
           fi
 
           if [ -z "$MOD" ]; then
@@ -47,8 +60,24 @@ jobs:
             exit 1
           fi
 
+          # Modül yolunu belirle: ADDONS_PATHS içinde sırayla ara
+          MOD_PATH=""
+          for SPATH in "${SEARCH_PATHS[@]}"; do
+            if [ -d "${SPATH}/$MOD" ]; then
+              MOD_PATH="${SPATH}/$MOD"
+              break
+            fi
+          done
+
+          if [ -z "$MOD_PATH" ]; then
+            echo "❌ '$MOD' modülü hiçbir arama yolunda bulunamadı: ${{ env.ADDONS_PATHS }}"
+            exit 1
+          fi
+
+          echo "📂 Modül yolu: $MOD_PATH"
+
           # Manifest'ten versiyonu çek
-          MANIFEST="custom_addons/$MOD/__manifest__.py"
+          MANIFEST="$MOD_PATH/__manifest__.py"
           VERSION_LINE=$(grep -E "['\"]version['\"]" "$MANIFEST" | head -n 1)
           RAW_VERSION=$(echo "$VERSION_LINE" | grep -oE "[0-9]+\.[0-9]+" | head -n 1)
 
@@ -73,8 +102,9 @@ jobs:
             PY_VERSION="3.11"
           fi
 
-          echo "🎯 Test Hedefi: $MOD (Odoo $RAW_VERSION, Python $PY_VERSION)"
+          echo "🎯 Test Hedefi: $MOD @ $MOD_PATH (Odoo $RAW_VERSION, Python $PY_VERSION)"
           echo "module=$MOD" >> $GITHUB_OUTPUT
+          echo "module_path=$MOD_PATH" >> $GITHUB_OUTPUT
           echo "odoo_version=$RAW_VERSION" >> $GITHUB_OUTPUT
           echo "python_version=$PY_VERSION" >> $GITHUB_OUTPUT
 
@@ -116,13 +146,14 @@ jobs:
       - name: Linter Check for ${{ needs.setup.outputs.module }}
         run: |
           MOD="${{ needs.setup.outputs.module }}"
-          echo "Linting odoo/addons/$MOD/"
-          ruff check "odoo/addons/$MOD/"
+          MOD_PATH="${{ needs.setup.outputs.module_path }}"
+          echo "Linting $MOD_PATH/"
+          ruff check "$MOD_PATH/"
           pylint \
             --load-plugins=pylint_odoo \
             --disable=all \
             --enable=odoolint \
-            "odoo/addons/$MOD/"
+            "$MOD_PATH/"
 
   # ─────────────────────────────────────────
   # 3. Manifest Sanity Check
@@ -139,7 +170,8 @@ jobs:
       - name: Validate __manifest__.py
         run: |
           MOD="${{ needs.setup.outputs.module }}"
-          MANIFEST_PATH="odoo/addons/$MOD/__manifest__.py"
+          MOD_PATH="${{ needs.setup.outputs.module_path }}"
+          MANIFEST_PATH="$MOD_PATH/__manifest__.py"
 
           if [ ! -f "$MANIFEST_PATH" ]; then
             echo "❌ $MANIFEST_PATH bulunamadı!"
@@ -221,15 +253,17 @@ jobs:
       - name: Prepare Isolated Test Environment
         run: |
           MOD="${{ needs.setup.outputs.module }}"
+          MOD_PATH="${{ needs.setup.outputs.module_path }}"
           mkdir -p testing_addons
           # Sadece hedeflenen modülü test addons klasörüne linkle
-          ln -s "$PWD/odoo/addons/$MOD" "testing_addons/$MOD"
-          echo "Test ortamına '$MOD' izole edildi."
+          ln -s "$PWD/$MOD_PATH" "testing_addons/$MOD"
+          echo "Test ortamına '$MOD' ($MOD_PATH) izole edildi."
 
       - name: Run Odoo Tests
         run: |
           MOD="${{ needs.setup.outputs.module }}"
-          if [ ! -d "odoo/addons/$MOD/tests" ]; then
+          MOD_PATH="${{ needs.setup.outputs.module_path }}"
+          if [ ! -d "$MOD_PATH/tests" ]; then
             echo "⚠️ '$MOD' modülünde tests/ klasörü bulunamadı, test komutu çalıştırılmayacak. Sadece yükleme simüle edildi."
             exit 0
           fi
