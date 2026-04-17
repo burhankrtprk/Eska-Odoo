@@ -2,7 +2,7 @@ import datetime
 import logging
 import re
 
-from odoo import models, fields, _
+from odoo import models, fields
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ class DeliveryCarrier(models.Model):
             password=secret_values.get('aras_password') or '',
             customer_code=secret_values.get('aras_customer_code') or '',
             environment=env,
+            env=self.env,
         )
 
     @staticmethod
@@ -111,14 +112,16 @@ class DeliveryCarrier(models.Model):
     def _get_aras_warning_message(self, integration_code, record_confirmed=False):
         self.ensure_one()
         if record_confirmed:
-            return _(
+            return self.env._(
                 "Aras record found. Tracking reference will be available "
-                "after the barcode is scanned. Integration Code: %s"
-            ) % integration_code
-        return _(
+                "after the barcode is scanned. Integration Code: %s",
+                integration_code,
+            )
+        return self.env._(
             "Aras record created. Tracking reference will be available "
-            "after the barcode is scanned. Integration Code: %s"
-        ) % integration_code
+            "after the barcode is scanned. Integration Code: %s",
+            integration_code,
+        )
 
     def _get_piece_count(self, picking):
         packages = picking.move_line_ids.mapped('result_package_id')
@@ -405,13 +408,13 @@ class DeliveryCarrier(models.Model):
     def aras_cancel_shipment(self, picking):
         self.ensure_one()
         if not picking.aras_integration_code:
-            raise UserError(_("This shipment does not have an Aras integration code."))
+            raise UserError(self.env._("This shipment does not have an Aras integration code."))
 
         client = self._get_aras_client()
         result = client.cancel_order(picking.aras_integration_code)
 
         if not result.get('success'):
             raise UserError(
-                _("Aras Kargo cancellation failed: %s") % result.get('message', 'Unknown error')
+                self.env._("Aras Kargo cancellation failed: %s", result.get('message', 'Unknown error'))
             )
         return True

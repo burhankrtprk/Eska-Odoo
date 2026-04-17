@@ -3,7 +3,7 @@ from datetime import timedelta
 
 from markupsafe import Markup
 
-from odoo import api, fields, models, _
+from odoo import api, fields, models
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -13,7 +13,6 @@ class StockPicking(models.Model):
     _inherit = 'stock.picking'
 
     aras_integration_code = fields.Char(
-        string="Aras Integration Code",
         copy=False,
         readonly=True,
     )
@@ -24,7 +23,6 @@ class StockPicking(models.Model):
         help="Comma-separated piece barcode numbers",
     )
     aras_sync_pending = fields.Boolean(
-        string="Aras Sync Pending",
         default=False,
         copy=False,
     )
@@ -48,7 +46,6 @@ class StockPicking(models.Model):
             ('returned', 'Returned'),
             ('canceled', 'Canceled'),
         ],
-        string="Aras Delivery State",
         readonly=True,
         copy=False,
     )
@@ -128,14 +125,14 @@ class StockPicking(models.Model):
             res['exact_price']
         )
         order_currency = self.sale_id.currency_id or self.company_id.currency_id
-        msg = _(
+        msg = self.env._(
             "Shipment registered in Aras Kargo with integration code %(code)s.",
             code=self.aras_integration_code or '-',
         )
-        msg += Markup("<br/>") + _(
+        msg += Markup("<br/>") + self.env._(
             "Tracking reference will be available after the shipment barcode is scanned."
         )
-        msg += Markup("<br/>") + _(
+        msg += Markup("<br/>") + self.env._(
             "Cost: %(price).2f %(currency)s",
             price=self.carrier_price,
             currency=order_currency.name,
@@ -148,7 +145,7 @@ class StockPicking(models.Model):
         if self.delivery_type != 'aras':
             return
         if not self.aras_integration_code:
-            raise UserError(_("This shipment does not have an Aras integration code."))
+            raise UserError(self.env._("This shipment does not have an Aras integration code."))
 
         self.carrier_id.aras_cancel_shipment(self)
         self.write({

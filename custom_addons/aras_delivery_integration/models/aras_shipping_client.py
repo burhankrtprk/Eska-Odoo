@@ -7,7 +7,6 @@ from requests import Session
 from zeep import Client, Settings, Transport
 from zeep.helpers import serialize_object
 from zeep.plugins import HistoryPlugin
-from odoo import _
 from odoo.exceptions import UserError
 
 _logger = logging.getLogger(__name__)
@@ -36,11 +35,12 @@ CANCEL_RESULT_MESSAGES = {
 
 class ArasShippingClient:
 
-    def __init__(self, username, password, customer_code='', environment='test'):
+    def __init__(self, username, password, customer_code='', environment='test', env=None):
         self.username = username
         self.password = password
         self.customer_code = customer_code
-        self.env = 'prod' if environment == 'prod' else 'test'
+        self.aras_env = 'prod' if environment == 'prod' else 'test'
+        self.env = env
 
         session = Session()
         session.timeout = 30
@@ -54,13 +54,13 @@ class ArasShippingClient:
     @property
     def order_client(self):
         if self._order_client is None:
-            self._order_client = self._build_client(ARAS_ORDER_URL[self.env])
+            self._order_client = self._build_client(ARAS_ORDER_URL[self.aras_env])
         return self._order_client
 
     @property
     def query_client(self):
         if self._query_client is None:
-            self._query_client = self._build_client(ARAS_QUERY_URL[self.env])
+            self._query_client = self._build_client(ARAS_QUERY_URL[self.aras_env])
         return self._query_client
 
     def _build_client(self, wsdl_url):
@@ -86,7 +86,7 @@ class ArasShippingClient:
                 _logger.debug("Aras SOAP [%s] RESPONSE:\n%s", operation, raw.decode('utf-8'))
 
         except Exception:
-            pass
+            _logger.debug("Failed to log SOAP exchange for %s", operation, exc_info=True)
 
     @staticmethod
     def _get_result_field(result, field, default=''):
@@ -114,7 +114,7 @@ class ArasShippingClient:
     def create_order(self, order_data):
         client = self.order_client
         if not client:
-            raise UserError(_("Could not connect to Aras Kargo shipping service."))
+            raise UserError(self.env._("Could not connect to Aras Kargo shipping service."))
         try:
             pieces = order_data.pop('PieceDetails', None)
             if pieces:
@@ -139,11 +139,11 @@ class ArasShippingClient:
         except Exception as e:
             self._log_soap_exchange('SetOrder')
             _logger.error("SetOrder error: %s", e)
-            raise UserError(_("Shipping error: %s") % e)
+            raise UserError(self.env._("Shipping error: %s", e))
 
     def _parse_set_order_response(self, response):
         if response is None:
-            raise UserError(_("No response received from Aras Kargo (empty response)."))
+            raise UserError(self.env._("No response received from Aras Kargo (empty response)."))
 
         result_info = None
 
@@ -162,8 +162,7 @@ class ArasShippingClient:
 
         if result_info is None:
             raise UserError(
-                _("Could not get a valid response from Aras Kargo.\nResponse: %s")
-                % str(response)[:300]
+                self.env._("Could not get a valid response from Aras Kargo.\nResponse: %s", str(response)[:300])
             )
 
         code = str(self._get_result_field(result_info, 'ResultCode', ''))
@@ -171,7 +170,7 @@ class ArasShippingClient:
         _logger.info("Aras SetOrder result: Code=%s, Message=%s", code, message)
 
         if code not in ('0', '1'):
-            raise UserError(_("Aras Kargo Rejection (Code: %s): %s") % (code, message))
+            raise UserError(self.env._("Aras Kargo Rejection (Code: %(code)s): %(message)s", code=code, message=message))
         return result_info
 
     def get_order_status(self, integration_code):
@@ -209,7 +208,7 @@ class ArasShippingClient:
     def cancel_order(self, integration_code):
         client = self.order_client
         if not client:
-            raise UserError(_("Could not connect to Aras Kargo shipping service."))
+            raise UserError(self.env._("Could not connect to Aras Kargo shipping service."))
         try:
             response = client.service.CancelDispatch(
                 userName=self.username,
@@ -231,7 +230,7 @@ class ArasShippingClient:
             return {'success': False, 'message': message}
         except Exception as e:
             self._log_soap_exchange('CancelDispatch')
-            raise UserError(_("Shipment cancel error: %s") % e)
+            raise UserError(self.env._("Shipment cancel error: %s", e))
 
     def _build_login_xml(self):
         return (

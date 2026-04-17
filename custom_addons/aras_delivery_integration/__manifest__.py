@@ -3,7 +3,7 @@
     'summary': 'Aras Kargo shipping and reporting integration',
     'version': '18.0.2.0.0',
     'category': 'Inventory/Delivery',
-    'author': 'ESKA Software',
+    'author': 'ESKA',
     'license': 'AGPL-3',
     'depends': [
         'delivery',
@@ -23,6 +23,4 @@
         'views/stock_picking_views.xml',
         'reports/aras_shipping_report.xml',
     ],
-    'installable': True,
-    'auto_install': False,
 }
