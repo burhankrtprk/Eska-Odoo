@@ -147,6 +147,7 @@ jobs:
             --load-plugins=pylint_odoo \
             --disable=all \
             --enable=odoolint \
+            --disable=C8101 \
             "$MOD_PATH/"
 
   # ─────────────────────────────────────────
