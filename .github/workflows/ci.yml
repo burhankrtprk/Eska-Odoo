@@ -116,13 +116,13 @@ jobs:
       - name: Linter Check for ${{ needs.setup.outputs.module }}
         run: |
           MOD="${{ needs.setup.outputs.module }}"
-          echo "Linting custom_addons/$MOD/"
-          ruff check "custom_addons/$MOD/"
+          echo "Linting odoo/addons/$MOD/"
+          ruff check "odoo/addons/$MOD/"
           pylint \
             --load-plugins=pylint_odoo \
             --disable=all \
             --enable=odoolint \
-            "custom_addons/$MOD/"
+            "odoo/addons/$MOD/"
 
   # ─────────────────────────────────────────
   # 3. Manifest Sanity Check
@@ -139,7 +139,7 @@ jobs:
       - name: Validate __manifest__.py
         run: |
           MOD="${{ needs.setup.outputs.module }}"
-          MANIFEST_PATH="custom_addons/$MOD/__manifest__.py"
+          MANIFEST_PATH="odoo/addons/$MOD/__manifest__.py"
 
           if [ ! -f "$MANIFEST_PATH" ]; then
             echo "❌ $MANIFEST_PATH bulunamadı!"
@@ -223,13 +223,13 @@ jobs:
           MOD="${{ needs.setup.outputs.module }}"
           mkdir -p testing_addons
           # Sadece hedeflenen modülü test addons klasörüne linkle
-          ln -s "$PWD/custom_addons/$MOD" "testing_addons/$MOD"
+          ln -s "$PWD/odoo/addons/$MOD" "testing_addons/$MOD"
           echo "Test ortamına '$MOD' izole edildi."
 
       - name: Run Odoo Tests
         run: |
           MOD="${{ needs.setup.outputs.module }}"
-          if [ ! -d "custom_addons/$MOD/tests" ]; then
+          if [ ! -d "odoo/addons/$MOD/tests" ]; then
             echo "⚠️ '$MOD' modülünde tests/ klasörü bulunamadı, test komutu çalıştırılmayacak. Sadece yükleme simüle edildi."
             exit 0
           fi
