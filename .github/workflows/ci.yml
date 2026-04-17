@@ -14,7 +14,7 @@ on:
 env:
   # Ortam değişkeniyle sabit bir modül verebilirsiniz.
   # Eğer bu boşsa, Git değişikliklerinden otomatik tespit edilir.
-  TARGET_MODULE: "stock"
+  TARGET_MODULE: "aras_delivery_integration"
 
   # Modül arama yolları (virgülle ayrılmış).
   # Yeni bir addons dizini eklemek için buraya eklemeniz yeterli.
