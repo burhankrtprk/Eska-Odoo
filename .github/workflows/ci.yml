@@ -207,11 +207,11 @@ jobs:
       postgres:
         image: postgres:16 # Odoo 18 için Postgres 16'ya yükseltildi
         env:
-          POSTGRES_USER: odoo
-          POSTGRES_PASSWORD: odoo
+          POSTGRES_USER: burhan
+          POSTGRES_PASSWORD: burhan
           POSTGRES_DB: odoo_test
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U burhan"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -277,7 +277,7 @@ jobs:
             -d odoo_test \
             --db_host=localhost \
             --db_port=65432 \
-            --db_user=odoo \
-            --db_password=odoo \
+            --db_user=burhan \
+            --db_password=burhan \
             --addons-path=odoo_core/addons,testing_addons \
             -i $MOD
