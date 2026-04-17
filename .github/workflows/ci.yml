@@ -148,7 +148,13 @@ jobs:
             --disable=all \
             --enable=odoolint \
             --disable=C8101 \
-            "$MOD_PATH/"
+            --fail-under=10.0 \
+            "$MOD_PATH/" 2>&1 | tee /tmp/pylint_output.txt
+          SCORE=$(grep -oP 'rated at \K[0-9.]+' /tmp/pylint_output.txt || echo "N/A")
+          echo ""
+          echo "═══════════════════════════════════"
+          echo "  📊 Pylint Score: $SCORE / 10"
+          echo "═══════════════════════════════════"
 
   # ─────────────────────────────────────────
   # 3. Manifest Sanity Check
