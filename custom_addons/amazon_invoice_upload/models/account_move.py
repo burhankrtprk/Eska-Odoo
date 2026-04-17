@@ -1,5 +1,5 @@
 import requests
-from odoo import models, fields, api, _
+from odoo import models, fields, api
 from odoo.exceptions import UserError
 from odoo.addons.sale_amazon import utils as amazon_utils
 
@@ -49,19 +49,19 @@ class AccountMove(models.Model):
         amazon_sale_lines = self._get_related_amazon_sale_lines()
 
         if not amazon_sale_lines:
-            raise UserError(_("No linked Amazon order found for this invoice."))
+            raise UserError(self.env._("No linked Amazon order found for this invoice."))
 
         accounts = amazon_sale_lines.mapped('amazon_offer_id.account_id')
         if not accounts:
-            raise UserError(_("No Amazon account found for this invoice."))
+            raise UserError(self.env._("No Amazon account found for this invoice."))
 
         if len(accounts) > 1:
-            raise UserError(_("This invoice is linked to multiple Amazon accounts."))
+            raise UserError(self.env._("This invoice is linked to multiple Amazon accounts."))
 
         amazon_orders = self._get_related_amazon_sale_orders()
 
         if len(amazon_orders) > 1:
-            raise UserError(_("This invoice is linked to multiple Amazon orders."))
+            raise UserError(self.env._("This invoice is linked to multiple Amazon orders."))
 
         return accounts[0], amazon_orders[0].amazon_order_ref
 
@@ -72,7 +72,7 @@ class AccountMove(models.Model):
         marketplaces = amazon_sale_lines.mapped('amazon_offer_id.marketplace_id')
 
         if len(marketplaces) > 1:
-            raise UserError(_("This invoice is linked to multiple Amazon marketplaces."))
+            raise UserError(self.env._("This invoice is linked to multiple Amazon marketplaces."))
 
         if marketplaces:
             return marketplaces[0].api_ref
@@ -84,7 +84,7 @@ class AccountMove(models.Model):
         pdf_content, dummy = self.env['ir.actions.report']._render_qweb_pdf('account.report_invoice', [self.id])
 
         if not pdf_content:
-            raise UserError(_("Could not generate PDF."))
+            raise UserError(self.env._("Could not generate PDF."))
 
         return pdf_content
 
@@ -108,7 +108,7 @@ class AccountMove(models.Model):
             )
             response.raise_for_status()
         except Exception as e:
-            raise UserError(_("Failed to upload PDF to Amazon: %s") % str(e))
+            raise UserError(self.env._("Failed to upload PDF to Amazon: %s", e))
 
     def _submit_amazon_invoice_feed(self, account, marketplace_ref, feed_document_id, amazon_order_ref, invoice_number,
                                     total_amount, total_vat):
