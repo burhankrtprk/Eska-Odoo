@@ -64,7 +64,12 @@ class TestStockPickingAras(TransactionCase):
 
     def test_cancel_non_aras_picking_does_nothing(self):
         """Canceling a non-Aras picking should do nothing."""
-        picking = self._create_picking(delivery_type='fixed')
+        fixed_carrier = self.env['delivery.carrier'].create({
+            'name': 'Fixed Carrier',
+            'delivery_type': 'fixed',
+            'product_id': self.product_delivery.id,
+        })
+        picking = self._create_picking(carrier_id=fixed_carrier.id)
         result = picking.action_cancel_aras_shipment()
         self.assertIsNone(result)
 

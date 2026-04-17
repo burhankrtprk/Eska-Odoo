@@ -55,7 +55,9 @@ class TestDeliveryCarrier(TransactionCase):
     # ──────────────────────────────────────────
     def test_generate_integration_code_format(self):
         """Integration code should be 16 chars: 10 time + 6 picking ID."""
-        picking = self.env['stock.picking'].new({'id': 42})
+        from unittest.mock import MagicMock
+        picking = MagicMock()
+        picking.id = 42
         code = self.carrier._generate_aras_integration_code(picking)
         self.assertEqual(len(code), 16)
         self.assertTrue(code.endswith('000042'))
