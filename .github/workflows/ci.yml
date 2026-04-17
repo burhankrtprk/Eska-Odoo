@@ -14,7 +14,7 @@ on:
 env:
   # Ortam değişkeniyle sabit bir modül verebilirsiniz.
   # Eğer bu boşsa, Git değişikliklerinden otomatik tespit edilir.
-  TARGET_MODULE: "aras_delivery_integration"
+  TARGET_MODULE: "amazon_invoice_upload"
 
   # Modül arama yolları (virgülle ayrılmış).
   # Yeni bir addons dizini eklemek için buraya eklemeniz yeterli.
