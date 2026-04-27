@@ -113,8 +113,6 @@ class TestStockPickingAras(TransactionCase):
         picking.write({
             'aras_is_cod': True,
             'aras_cod_amount': 250.50,
-            'aras_cod_type': '1',
         })
         self.assertTrue(picking.aras_is_cod)
         self.assertEqual(picking.aras_cod_amount, 250.50)
-        self.assertEqual(picking.aras_cod_type, '1')

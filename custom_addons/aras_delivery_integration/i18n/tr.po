@@ -46,8 +46,18 @@ msgstr "Adres :"
 
 #. module: aras_delivery_integration
 #: model:ir.model.fields,field_description:aras_delivery_integration.field_stock_picking__aras_delivery_state
-msgid "Aras Delivery State"
+msgid "Aras Kargo Durumu"
 msgstr "Aras Kargo Durumu"
+
+#. module: aras_delivery_integration
+#: model:ir.model.fields,field_description:aras_delivery_integration.field_stock_picking__aras_integration_code
+msgid "Actual Deci"
+msgstr "Gerçek Desi"
+
+#. module: aras_delivery_integration
+#: model:ir.model.fields,field_description:aras_delivery_integration.field_stock_picking__carrier_price
+msgid "Actual Shipping Cost"
+msgstr "Gerçek Kargo Ücreti"
 
 #. module: aras_delivery_integration
 #: model:ir.model.fields,field_description:aras_delivery_integration.field_stock_picking__aras_integration_code
@@ -61,12 +71,12 @@ msgstr "Aras Entegrasyon Kodu"
 #: model:ir.model.fields.selection,name:aras_delivery_integration.selection__delivery_carrier__delivery_type__aras
 #: model:ir.model.fields.selection,name:aras_delivery_integration.selection__stock_package_type__package_carrier_type__aras
 msgid "Aras Kargo"
-msgstr ""
+msgstr "Aras Kargo"
 
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.view_delivery_carrier_form_inherit_aras
 msgid "Aras Kargo Configuration"
-msgstr ""
+msgstr "Aras Kargo Ayarları"
 
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.view_picking_form_inherit_aras
@@ -76,18 +86,24 @@ msgstr "Aras Kargo Bilgileri"
 #. module: aras_delivery_integration
 #: model:product.template,name:aras_delivery_integration.product_product_delivery_aras_product_template
 msgid "Aras Kargo Teslimat Bedeli"
-msgstr ""
+msgstr "Aras Kargo Teslimat Bedeli"
 
 #. module: aras_delivery_integration
 #. odoo-python
 #: code:addons/aras_delivery_integration/models/delivery_carrier.py:0
 msgid "Aras Kargo cancellation failed: %s"
-msgstr ""
+msgstr "Aras Kargo iptali başarısız oldu: %s"
+
+#. module: aras_delivery_integration
+#. odoo-python
+#: code:addons/aras_delivery_integration/models/aras_shipping_client.py:0
+msgid "Aras Kargo Rejection (Code: %(code)s): %(message)s"
+msgstr "Aras Kargo Reddi (Kod: %(code)s): %(message)s"
 
 #. module: aras_delivery_integration
 #: model:ir.actions.server,name:aras_delivery_integration.ir_cron_sync_aras_pickings_ir_actions_server
-msgid "Aras Kargo: Otomatik Durum Güncelleme"
-msgstr ""
+msgid "Aras Kargo: Auto Status Update"
+msgstr "Aras Kargo: Otomatik Durum Güncelleme"
 
 #. module: aras_delivery_integration
 #: model:ir.actions.report,name:aras_delivery_integration.action_report_aras_shipping_label
@@ -102,7 +118,7 @@ msgstr "Aras Senkronizasyon Bekliyor"
 #. module: aras_delivery_integration
 #: model:ir.model.fields,field_description:aras_delivery_integration.field_stock_picking__aras_last_sync_warning
 msgid "Aras Warning"
-msgstr ""
+msgstr "Aras Uyarısı"
 
 #. module: aras_delivery_integration
 #. odoo-python
@@ -150,9 +166,9 @@ msgid "COD Amount:"
 msgstr "Tahsilat Tutarı :"
 
 #. module: aras_delivery_integration
-#: model:ir.model.fields,field_description:aras_delivery_integration.field_stock_picking__aras_cod_type
-msgid "COD Type"
-msgstr "Tahsilat Tipi"
+#: model_terms:ir.ui.view,arch_db:aras_delivery_integration.report_aras_shipping_label
+msgid "COD Shipment"
+msgstr "Tahsilatlı Kargo"
 
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.view_picking_form_inherit_aras
@@ -170,48 +186,51 @@ msgid "Carrier"
 msgstr "Nakliyeci"
 
 #. module: aras_delivery_integration
-#: model:ir.model.fields.selection,name:aras_delivery_integration.selection__stock_picking__aras_cod_type__0
-msgid "Cash"
-msgstr "Nakit"
-
-#. module: aras_delivery_integration
 #: model:ir.model.fields,field_description:aras_delivery_integration.field_stock_picking__aras_is_cod
 msgid "Cash on Delivery"
-msgstr "Kapıda Ödeme"
+msgstr "Tahsilatlı Kargo"
 
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.view_picking_form_inherit_aras
 msgid "Cash on Delivery (COD)"
-msgstr "Kapıda Ödeme (Tahsilatlı Kargo)"
-
-#. module: aras_delivery_integration
-#: model_terms:ir.ui.view,arch_db:aras_delivery_integration.report_aras_shipping_label
-msgid "Cash on Delivery /"
-msgstr "Tahsilatlı Kargo /"
+msgstr "Tahsilatlı Kargo (COD)"
 
 #. module: aras_delivery_integration
 #: model:ir.model.fields,help:aras_delivery_integration.field_stock_picking__aras_barcode_numbers
 msgid "Comma-separated piece barcode numbers"
-msgstr ""
+msgstr "Virgülle ayrılmış parça barkod numaraları"
 
 #. module: aras_delivery_integration
 #. odoo-python
 #: code:addons/aras_delivery_integration/models/stock_picking.py:0
 msgid "Cost: %(price).2f %(currency)s"
-msgstr ""
+msgstr "Ücret: %(price).2f %(currency)s"
 
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.view_delivery_carrier_form_inherit_aras
 msgid "Credentials"
-msgstr ""
+msgstr "Kimlik Bilgileri"
 
 #. module: aras_delivery_integration
-#: model:ir.model.fields.selection,name:aras_delivery_integration.selection__stock_picking__aras_cod_type__1
-msgid "Credit Card"
-msgstr "Kredi Kartı"
+#: model_terms:ir.ui.view,arch_db:aras_delivery_integration.view_delivery_carrier_form_inherit_aras
+msgid "Shipment Defaults"
+msgstr "Kargo Varsayılanları"
 
 #. module: aras_delivery_integration
-#: model:ir.model.fields,field_description:aras_delivery_integration.field_delivery_carrier__aras_customer_code
+#. odoo-python
+#: code:addons/aras_delivery_integration/models/aras_shipping_client.py:0
+msgid "Could not connect to Aras Kargo shipping service."
+msgstr "Aras Kargo servisine bağlanılamadı."
+
+#. module: aras_delivery_integration
+#. odoo-python
+#: code:addons/aras_delivery_integration/models/aras_shipping_client.py:0
+msgid "Could not get a valid response from Aras Kargo.\nResponse: %s"
+msgstr "Aras Kargo'dan geçerli yanıt alınamadı.\nYanıt: %s"
+
+#. module: aras_delivery_integration
+#. odoo-python
+#: code:addons/aras_delivery_integration/models/aras_shipping_client.py:0
 msgid "Customer Code"
 msgstr "Müşteri Kodu"
 
@@ -254,6 +273,12 @@ msgstr "Ana Barkod"
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.report_aras_shipping_label
 msgid "Name:"
 msgstr "İsim :"
+
+#. module: aras_delivery_integration
+#. odoo-python
+#: code:addons/aras_delivery_integration/models/aras_shipping_client.py:0
+msgid "No response received from Aras Kargo (empty response)."
+msgstr "Aras Kargo'dan yanıt alınamadı (boş yanıt)."
 
 #. module: aras_delivery_integration
 #: model:ir.model.fields.selection,name:aras_delivery_integration.selection__stock_picking__aras_delivery_state__out_for_delivery
@@ -321,12 +346,26 @@ msgid ""
 "Sender address ID registered in Aras Kargo. Enter the relevant ID if you "
 "have multiple sender addresses."
 msgstr ""
+"Aras Kargo'ya kayıtlı gönderici adres ID'si. Birden fazla gönderici "
+"adresiniz varsa ilgili ID'yi girin."
 
 #. module: aras_delivery_integration
 #. odoo-python
 #: code:addons/aras_delivery_integration/models/stock_picking.py:0
 msgid "Shipment registered in Aras Kargo with integration code %(code)s."
-msgstr ""
+msgstr "Gönderi Aras Kargo'ya %(code)s entegrasyon koduyla kaydedildi."
+
+#. module: aras_delivery_integration
+#. odoo-python
+#: code:addons/aras_delivery_integration/models/aras_shipping_client.py:0
+msgid "Shipment cancel error: %s"
+msgstr "Kargo iptal hatası: %s"
+
+#. module: aras_delivery_integration
+#. odoo-python
+#: code:addons/aras_delivery_integration/models/aras_shipping_client.py:0
+msgid "Shipping error: %s"
+msgstr "Kargo hatası: %s"
 
 #. module: aras_delivery_integration
 #: model:ir.model,name:aras_delivery_integration.model_delivery_carrier
@@ -336,7 +375,7 @@ msgstr "Nakliye Yöntemleri"
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.view_picking_form_inherit_aras
 msgid "Status & Tracking"
-msgstr ""
+msgstr "Durum ve Takip"
 
 #. module: aras_delivery_integration
 #: model:ir.model,name:aras_delivery_integration.model_stock_package_type
@@ -346,31 +385,36 @@ msgstr "Stok Paket Türü"
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.report_aras_shipping_label
 msgid "Sub Barcode"
-msgstr ""
+msgstr "Alt Barkod"
 
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.report_aras_shipping_label
 msgid "TL"
-msgstr ""
+msgstr "TL"
 
 #. module: aras_delivery_integration
 #. odoo-python
 #: code:addons/aras_delivery_integration/models/delivery_carrier.py:0
 #: code:addons/aras_delivery_integration/models/stock_picking.py:0
 msgid "This shipment does not have an Aras integration code."
-msgstr ""
+msgstr "Bu gönderinin Aras entegrasyon kodu bulunmuyor."
 
 #. module: aras_delivery_integration
 #. odoo-python
 #: code:addons/aras_delivery_integration/models/stock_picking.py:0
 msgid ""
 "Tracking reference will be available after the shipment barcode is scanned."
-msgstr ""
+msgstr "Takip referansı, kargo barkodu okutulduktan sonra oluşacaktır."
 
 #. module: aras_delivery_integration
 #: model:ir.model,name:aras_delivery_integration.model_stock_picking
 msgid "Transfer"
 msgstr "Aktarım"
+
+#. module: aras_delivery_integration
+#: model:ir.model.fields,field_description:aras_delivery_integration.field_stock_picking__carrier_tracking_ref
+msgid "Tracking Reference"
+msgstr "Kargo Takip No"
 
 #. module: aras_delivery_integration
 #: model:ir.model.fields,field_description:aras_delivery_integration.field_delivery_carrier__aras_username
@@ -380,4 +424,4 @@ msgstr "Kullanıcı Adı"
 #. module: aras_delivery_integration
 #: model_terms:ir.ui.view,arch_db:aras_delivery_integration.view_picking_form_inherit_aras
 msgid "Warning"
-msgstr ""
+msgstr "Uyarı"

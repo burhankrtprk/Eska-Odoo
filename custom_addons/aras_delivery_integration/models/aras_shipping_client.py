@@ -1,13 +1,25 @@
+# Copyright 2026 ESKA
+# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+"""
+Aras Kargo SOAP istemcisi.
+
+Aras Kargo'nun iki farklı WSDL uç noktasıyla iletişimi yönetir:
+- Sipariş servisi (SetOrder, GetOrderWithIntegrationCode, CancelDispatch)
+- Sorgulama servisi (GetQueryJSON — kargo takip detayları)
+"""
+
 import json
 import logging
 import re
 from lxml import etree
+from xml.sax.saxutils import escape
 
 from requests import Session
 from zeep import Client, Settings, Transport
 from zeep.helpers import serialize_object
 from zeep.plugins import HistoryPlugin
 from odoo.exceptions import UserError
+from odoo.tools.translate import _
 
 _logger = logging.getLogger(__name__)
 
@@ -24,23 +36,28 @@ ARAS_QUERY_URL = {
 }
 
 CANCEL_RESULT_MESSAGES = {
-    '0': 'Successful',
-    '1': 'Successfully deleted.',
-    '-1': 'Record not found.',
-    '-2': 'Invalid username or password.',
-    '936': 'An error occurred.',
-    '999': 'Cannot cancel a dispatched order.',
+    '0': 'Başarılı',
+    '1': 'Başarıyla silindi.',
+    '-1': 'Kayıt bulunamadı.',
+    '-2': 'Geçersiz kullanıcı adı veya şifre.',
+    '936': 'Bir hata oluştu.',
+    '999': 'Gönderilmiş bir sipariş iptal edilemez.',
 }
 
 
 class ArasShippingClient:
+    """Aras Kargo SOAP API istemcisi.
 
-    def __init__(self, username, password, customer_code='', environment='test', env=None):
+    Sipariş oluşturma, durum sorgulama ve iptal işlemlerini
+    zeep kütüphanesi üzerinden gerçekleştirir.
+    """
+
+    def __init__(self, username, password, customer_code='', environment='test'):
+        """İstemciyi yapılandır ve SOAP oturumunu hazırla."""
         self.username = username
         self.password = password
         self.customer_code = customer_code
         self.aras_env = 'prod' if environment == 'prod' else 'test'
-        self.env = env
 
         session = Session()
         session.timeout = 30
@@ -53,17 +70,20 @@ class ArasShippingClient:
 
     @property
     def order_client(self):
+        """Sipariş WSDL istemcisini döndürür; ilk erişimde oluşturur."""
         if self._order_client is None:
             self._order_client = self._build_client(ARAS_ORDER_URL[self.aras_env])
         return self._order_client
 
     @property
     def query_client(self):
+        """Sorgulama WSDL istemcisini döndürür; ilk erişimde oluşturur."""
         if self._query_client is None:
             self._query_client = self._build_client(ARAS_QUERY_URL[self.aras_env])
         return self._query_client
 
     def _build_client(self, wsdl_url):
+        """Verilen WSDL adresinden zeep istemcisi oluşturur."""
         try:
             return Client(
                 wsdl=wsdl_url,
@@ -76,6 +96,7 @@ class ArasShippingClient:
             return None
 
     def _log_soap_exchange(self, operation):
+        """Son SOAP istek ve yanıtını DEBUG seviyesinde loglar."""
         try:
             if self.history.last_sent:
                 raw = etree.tostring(self.history.last_sent['envelope'], pretty_print=True)
@@ -90,12 +111,14 @@ class ArasShippingClient:
 
     @staticmethod
     def _get_result_field(result, field, default=''):
+        """Dict veya nesne tipindeki yanıttan alan değerini okur."""
         if isinstance(result, dict):
             return result.get(field, default)
         return getattr(result, field, default)
 
     @staticmethod
     def _serialize_for_log(payload):
+        """SOAP nesnesini log için güvenli bir metne dönüştürür (max 1500 karakter)."""
         try:
             serialized = serialize_object(payload)
         except Exception:
@@ -106,15 +129,17 @@ class ArasShippingClient:
 
     @classmethod
     def is_missing_record_response(cls, payload):
+        """Yanıtın 'kayıt bulunamadı' içerip içermediğini kontrol eder."""
         if not payload:
             return False
         text = cls._serialize_for_log(payload).lower()
         return 'kayıt bulunamadı' in text or 'kayit bulunamadi' in text
 
     def create_order(self, order_data):
+        """Aras Kargo'ya yeni sipariş kaydeder (SetOrder)."""
         client = self.order_client
         if not client:
-            raise UserError(self.env._("Could not connect to Aras Kargo shipping service."))
+            raise UserError(_("Could not connect to Aras Kargo shipping service."))
         try:
             pieces = order_data.pop('PieceDetails', None)
             if pieces:
@@ -139,11 +164,12 @@ class ArasShippingClient:
         except Exception as e:
             self._log_soap_exchange('SetOrder')
             _logger.error("SetOrder error: %s", e)
-            raise UserError(self.env._("Shipping error: %s", e))
+            raise UserError(_("Shipping error: %s", e))
 
     def _parse_set_order_response(self, response):
+        """SetOrder yanıtını ayrıştırır; başarısız sonuçlarda UserError fırlatır."""
         if response is None:
-            raise UserError(self.env._("No response received from Aras Kargo (empty response)."))
+            raise UserError(_("No response received from Aras Kargo (empty response)."))
 
         result_info = None
 
@@ -162,7 +188,7 @@ class ArasShippingClient:
 
         if result_info is None:
             raise UserError(
-                self.env._("Could not get a valid response from Aras Kargo.\nResponse: %s", str(response)[:300])
+                _("Could not get a valid response from Aras Kargo.\nResponse: %s", str(response)[:300])
             )
 
         code = str(self._get_result_field(result_info, 'ResultCode', ''))
@@ -170,10 +196,11 @@ class ArasShippingClient:
         _logger.info("Aras SetOrder result: Code=%s, Message=%s", code, message)
 
         if code not in ('0', '1'):
-            raise UserError(self.env._("Aras Kargo Rejection (Code: %(code)s): %(message)s", code=code, message=message))
+            raise UserError(_("Aras Kargo Rejection (Code: %(code)s): %(message)s", code=code, message=message))
         return result_info
 
     def get_order_status(self, integration_code):
+        """Entegrasyon koduna göre sipariş durumunu sorgular."""
         client = self.order_client
         if not client:
             return None
@@ -206,9 +233,10 @@ class ArasShippingClient:
             return None
 
     def cancel_order(self, integration_code):
+        """Verilen entegrasyon koduna sahip sevkiyatı iptal eder (CancelDispatch)."""
         client = self.order_client
         if not client:
-            raise UserError(self.env._("Could not connect to Aras Kargo shipping service."))
+            raise UserError(_("Could not connect to Aras Kargo shipping service."))
         try:
             response = client.service.CancelDispatch(
                 userName=self.username,
@@ -230,18 +258,20 @@ class ArasShippingClient:
             return {'success': False, 'message': message}
         except Exception as e:
             self._log_soap_exchange('CancelDispatch')
-            raise UserError(self.env._("Shipment cancel error: %s", e))
+            raise UserError(_("Shipment cancel error: %s", e))
 
     def _build_login_xml(self):
+        """Sorgulama servisi için XML tabanlı giriş bilgisi oluşturur."""
         return (
             "<LoginInfo>"
             "<UserName>%s</UserName>"
             "<Password>%s</Password>"
             "<CustomerCode>%s</CustomerCode>"
             "</LoginInfo>"
-        ) % (self.username, self.password, self.customer_code)
+        ) % (escape(self.username), escape(self.password), escape(self.customer_code))
 
     def get_query_json(self, query_type, **kwargs):
+        """Sorgulama servisinden JSON formatında kargo verisi çeker (GetQueryJSON)."""
         client = self.query_client
         if not client:
             _logger.warning("Could not connect to Aras reporting service.")
@@ -250,7 +280,7 @@ class ArasShippingClient:
         login_info = self._build_login_xml()
         query_parts = ["<QueryType>%s</QueryType>" % query_type]
         for key, value in kwargs.items():
-            query_parts.append("<%s>%s</%s>" % (key, value, key))
+            query_parts.append("<%s>%s</%s>" % (key, escape(str(value)), key))
         query_info = "<QueryInfo>%s</QueryInfo>" % ''.join(query_parts)
 
         try:
@@ -274,6 +304,7 @@ class ArasShippingClient:
             return None
 
     def query_shipment_detail(self, integration_code):
+        """Entegrasyon koduna göre kargo takip detayını dict olarak döndürür (QT=11)."""
         raw = self.get_query_json(11, IntegrationCode=integration_code)
         if not raw:
             return None

@@ -1,3 +1,12 @@
+# Copyright 2026 ESKA
+# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+"""
+Aras Kargo sevkiyat alanları ve işlemleri.
+
+stock.picking modelini Aras Kargo'ya özgü alanlar, cron güncelleme
+ve iptal işlemleriyle genişletir.
+"""
+
 import logging
 from datetime import timedelta
 
@@ -10,6 +19,8 @@ _logger = logging.getLogger(__name__)
 
 
 class StockPicking(models.Model):
+    """Aras Kargo entegrasyonu için stock.picking genişletmesi."""
+
     _inherit = 'stock.picking'
 
     aras_integration_code = fields.Char(
@@ -46,16 +57,12 @@ class StockPicking(models.Model):
             ('returned', 'Returned'),
             ('canceled', 'Canceled'),
         ],
+        string="Aras Kargo Durumu",
         readonly=True,
         copy=False,
     )
     aras_is_cod = fields.Boolean(string="Cash on Delivery")
     aras_cod_amount = fields.Float(string="COD Amount")
-    aras_cod_type = fields.Selection(
-        [('0', 'Cash'), ('1', 'Credit Card')],
-        string="COD Type",
-        default='0',
-    )
     aras_delivery_person = fields.Char(
         string="Delivered To",
         readonly=True,
@@ -79,6 +86,7 @@ class StockPicking(models.Model):
 
     @api.model
     def _aras_sync_pickings(self):
+        """Bekleyen Aras sevkiyatlarının durumunu cron ile günceller (son 15 gün)."""
         cutoff = fields.Datetime.now() - timedelta(days=15)
         pickings = self.search([
             ('aras_sync_pending', '=', True),
@@ -101,6 +109,7 @@ class StockPicking(models.Model):
                 )
 
     def send_to_shipper(self):
+        """Aras sevkiyatını oluşturur; Aras dışı taşıyıcılar için üst sınıfa devreder."""
         self.ensure_one()
         if self.delivery_type != 'aras':
             return super().send_to_shipper()
@@ -141,6 +150,7 @@ class StockPicking(models.Model):
         self._add_delivery_cost_to_so()
 
     def action_cancel_aras_shipment(self):
+        """Aras sevkiyatını iptal eder ve tüm entegrasyon alanlarını sıfırlar."""
         self.ensure_one()
         if self.delivery_type != 'aras':
             return

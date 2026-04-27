@@ -2,7 +2,7 @@
 <odoo>
     <data noupdate="1">
         <record id="ir_cron_sync_aras_pickings" model="ir.cron">
-            <field name="name">Aras Kargo: Auto Status Update</field>
+            <field name="name">Aras Kargo: Otomatik Durum Güncelleme</field>
             <field name="model_id" ref="stock.model_stock_picking"/>
             <field name="state">code</field>
             <field name="code">model._aras_sync_pickings()</field>

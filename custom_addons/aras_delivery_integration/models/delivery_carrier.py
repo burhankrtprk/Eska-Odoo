@@ -1,3 +1,12 @@
+# Copyright 2026 ESKA
+# License AGPL-3.0 or later (https://www.gnu.org/licenses/agpl).
+"""
+Aras Kargo taşıyıcı modeli.
+
+delivery.carrier modelini Aras Kargo için genişletir:
+kimlik bilgileri, sipariş gönderme, takip ve iptal işlemleri.
+"""
+
 import datetime
 import logging
 import re
@@ -19,6 +28,8 @@ ARAS_STATUS_MAP = {
 
 
 class DeliveryCarrier(models.Model):
+    """Aras Kargo entegrasyonu için delivery.carrier genişletmesi."""
+
     _inherit = 'delivery.carrier'
 
     delivery_type = fields.Selection(
@@ -36,6 +47,7 @@ class DeliveryCarrier(models.Model):
     )
 
     def _get_aras_credentials(self):
+        """Aras kimlik bilgilerini sudo ile okur ve dict olarak döndürür."""
         self.ensure_one()
         return self.sudo().read([
             'aras_username',
@@ -45,6 +57,7 @@ class DeliveryCarrier(models.Model):
         ])[0]
 
     def _get_aras_client(self):
+        """Taşıyıcının kimlik bilgileriyle yapılandırılmış ArasShippingClient döndürür."""
         from .aras_shipping_client import ArasShippingClient
         secret_values = self._get_aras_credentials()
         env = 'prod' if self.prod_environment else 'test'
@@ -53,11 +66,11 @@ class DeliveryCarrier(models.Model):
             password=secret_values.get('aras_password') or '',
             customer_code=secret_values.get('aras_customer_code') or '',
             environment=env,
-            env=self.env,
         )
 
     @staticmethod
     def _sanitize_phone(raw_phone):
+        """Telefon numarasını Aras'ın beklediği 10 haneli formata temizler."""
         if not raw_phone:
             return ''
         digits = re.sub(r'\D', '', raw_phone)
@@ -68,6 +81,7 @@ class DeliveryCarrier(models.Model):
         return digits[:10]
 
     def _generate_aras_integration_code(self, picking):
+        """Benzersiz 16 karakterlik entegrasyon kodu üretir (YYMMDDHHMM + picking ID)."""
         now = datetime.datetime.now()
         time_part = now.strftime("%y%m%d%H%M")
         picking_part = str(picking.id).zfill(6)
@@ -75,6 +89,7 @@ class DeliveryCarrier(models.Model):
 
     @staticmethod
     def _extract_tracking_number(result):
+        """SOAP yanıtından kargo takip numarasını aday alan adlarını deneyerek çıkarır."""
         if not result:
             return ''
 
@@ -104,12 +119,14 @@ class DeliveryCarrier(models.Model):
         return ''
 
     def _generate_barcode_numbers(self, integration_code, piece_count):
+        """Her parça için entegrasyon koduna sıra numarası eklenmiş barkod listesi üretir."""
         return [
             "%s%s" % (integration_code, str(i).zfill(2))
             for i in range(1, piece_count + 1)
         ]
 
     def _get_aras_warning_message(self, integration_code, record_confirmed=False):
+        """Kullanıcıya gösterilecek barkod bekleme uyarı mesajını döndürür."""
         self.ensure_one()
         if record_confirmed:
             return self.env._(
@@ -124,10 +141,12 @@ class DeliveryCarrier(models.Model):
         )
 
     def _get_piece_count(self, picking):
+        """Sevkiyattaki paket sayısını döndürür; paket yoksa 1 kabul eder."""
         packages = picking.move_line_ids.mapped('result_package_id')
         return len(packages) if packages else 1
 
     def _prepare_piece_details(self, picking, integration_code):
+        """Her paket için ağırlık ve barkod bilgilerini içeren parça listesi hazırlar."""
         piece_count = self._get_piece_count(picking)
         barcodes = self._generate_barcode_numbers(integration_code, piece_count)
         packages = picking.move_line_ids.mapped('result_package_id')
@@ -154,6 +173,7 @@ class DeliveryCarrier(models.Model):
         return details, barcodes
 
     def _prepare_aras_order_data(self, picking, integration_code):
+        """Aras SetOrder çağrısı için sipariş veri sözlüğü ve barkod listesini hazırlar."""
         partner = picking.partner_id
         secret_values = self._get_aras_credentials()
         piece_details, barcodes = self._prepare_piece_details(picking, integration_code)
@@ -211,15 +231,20 @@ class DeliveryCarrier(models.Model):
             order_data.update({
                 'IsCod': '1',
                 'CodAmount': str(picking.aras_cod_amount),
-                'CodCollectionType': picking.aras_cod_type or '0',
+                'CodCollectionType': '0',
                 'CodBillingType': '0',
             })
 
         return order_data, barcodes
 
+    def _get_aras_price(self):
+        """Taşıyıcı ürününün liste fiyatını döndürür; ürün yoksa 0.0."""
+        return self.product_id.list_price if self.product_id else 0.0
+
     def aras_rate_shipment(self, order):
+        """Aras için nakliye ücretini ürün liste fiyatı olarak döndürür."""
         self.ensure_one()
-        price = self.product_id.list_price if self.product_id else 0.0
+        price = self._get_aras_price()
         return {
             'success': True,
             'price': price,
@@ -228,6 +253,7 @@ class DeliveryCarrier(models.Model):
         }
 
     def aras_send_shipping(self, pickings):
+        """Verilen sevkiyatları Aras Kargo'ya gönderir ve entegrasyon kodunu kaydeder."""
         res = []
         for picking in pickings:
             if picking.aras_integration_code and picking.aras_delivery_state != 'canceled':
@@ -239,7 +265,7 @@ class DeliveryCarrier(models.Model):
                     )
                 )
                 res.append({
-                    'exact_price': self.product_id.list_price if self.product_id else 0.0,
+                    'exact_price': self._get_aras_price(),
                     'tracking_number': False,
                     'warning_message': warning_message,
                 })
@@ -275,6 +301,7 @@ class DeliveryCarrier(models.Model):
         return res
 
     def aras_get_tracking_link(self, picking):
+        """Takip numarasına göre Aras kargo takip URL'si döndürür."""
         self.ensure_one()
         if picking.carrier_tracking_ref:
             return (
@@ -284,6 +311,9 @@ class DeliveryCarrier(models.Model):
         return False
 
     def _update_picking_from_query(self, picking, data):
+        """GetQueryJSON yanıtına göre sevkiyat durumunu ve takip bilgilerini günceller."""
+        if not isinstance(data, dict):
+            return
         vals = {}
 
         tracking = self._extract_tracking_number(data)
@@ -335,11 +365,13 @@ class DeliveryCarrier(models.Model):
 
     @staticmethod
     def _get_field(result, field, default=''):
+        """Dict veya nesne tipindeki yanıttan alan değerini okur."""
         if isinstance(result, dict):
             return result.get(field, default)
         return getattr(result, field, default)
 
     def _update_picking_from_order_service(self, picking, result):
+        """GetOrderWithIntegrationCode yanıtına göre takip numarasını ve teslimat durumunu yazar."""
         vals = {}
         tracking_no = self._extract_tracking_number(result)
         if tracking_no and tracking_no not in ('None', 'none'):
@@ -363,6 +395,7 @@ class DeliveryCarrier(models.Model):
             picking.write(vals)
 
     def aras_tracking_state_update(self, picking):
+        """Sevkiyatın durumunu önce sorgulama, sonra sipariş servisinden günceller."""
         self.ensure_one()
         if not picking.aras_integration_code:
             return False
@@ -406,6 +439,7 @@ class DeliveryCarrier(models.Model):
         return False
 
     def aras_cancel_shipment(self, picking):
+        """Aras Kargo'da sevkiyatı iptal eder; başarısızlıkta UserError fırlatır."""
         self.ensure_one()
         if not picking.aras_integration_code:
             raise UserError(self.env._("This shipment does not have an Aras integration code."))

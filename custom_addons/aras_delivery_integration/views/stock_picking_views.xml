@@ -49,9 +49,6 @@
                             <field name="aras_cod_amount"
                                    invisible="not aras_is_cod"
                                    required="aras_is_cod"/>
-                            <field name="aras_cod_type"
-                                   invisible="not aras_is_cod"
-                                   required="aras_is_cod"/>
                         </group>
                     </group>
                 </page>

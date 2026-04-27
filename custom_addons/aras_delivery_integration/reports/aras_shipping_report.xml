@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+    <record id="paperformat_aras_shipping_label_a4_no_margin" model="report.paperformat">
+        <field name="name">Aras Shipping Label</field>
+        <field name="format">custom</field>
+        <field name="page_height">100</field>
+        <field name="page_width">132</field>
+        <field name="orientation">Portrait</field>
+        <field name="margin_top">0</field>
+        <field name="margin_bottom">0</field>
+        <field name="margin_left">0</field>
+        <field name="margin_right">0</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">0</field>
+        <field name="disable_shrinking" eval="True"/>
+        <field name="dpi">96</field>
+    </record>
+
     <record id="action_report_aras_shipping_label" model="ir.actions.report">
         <field name="name">Aras Shipping Label</field>
         <field name="model">stock.picking</field>
@@ -9,13 +25,24 @@
         <field name="print_report_name">'Aras_Shipping_Label_%s' % (object.name)</field>
         <field name="binding_model_id" ref="stock.model_stock_picking"/>
         <field name="binding_type">report</field>
-        <field name="paperformat_id" ref="base.paperformat_euro"/>
+        <field name="paperformat_id" ref="paperformat_aras_shipping_label_a4_no_margin"/>
     </record>
 
     <template id="report_aras_shipping_label">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.basic_layout">
+                    <style>
+                        @page { size: 132mm 100mm; margin: 0; }
+                        html, body { margin: 0 !important; padding: 0 !important; }
+                        body { width: 132mm; }
+                        .page { margin: 0 !important; padding: 0 !important; width: 132mm; height: 100mm; box-sizing: border-box; }
+                        .header, .footer, .article, main,
+                        .o_report_layout_standard, .o_report_layout_boxed,
+                        .o_report_layout_background, .o_report_layout_clean,
+                        .o_report_layout_striped { margin: 0 !important; padding: 0 !important; }
+                        .page table, .page tr, .page td { page-break-inside: avoid !important; }
+                    </style>
                     <t t-set="base_barcode" t-value="o.aras_integration_code if o.aras_integration_code else (o.carrier_tracking_ref if o.carrier_tracking_ref else str(o.id).zfill(16))"/>
                     <t t-set="packages" t-value="o.move_line_ids.mapped('result_package_id')"/>
                     <t t-set="pkg_total" t-value="len(packages) if packages else 1"/>
@@ -71,10 +98,7 @@
                                     <tr>
                                         <td colspan="2" style="border-bottom: 2px solid #b3b3b3; padding: 10px; font-size: 16px;">
                                             <t t-if="o.aras_is_cod">
-                                                <strong>
-                                                    Cash on Delivery /
-                                                    <span t-field="o.aras_cod_type"/>
-                                                </strong>
+                                                <strong>COD Shipment</strong>
                                                 <strong style="float: right;">
                                                     COD Amount:
                                                     <span t-field="o.aras_cod_amount"/>
@@ -94,8 +118,8 @@
                                                 <t t-esc="base_barcode"/>
                                             </strong>
                                             <br/>
-                                            <img t-att-src="'/report/barcode/?barcode_type=Code128&amp;value=%s&amp;width=300&amp;height=50' % base_barcode"
-                                                 style="width: 300px; height: 50px; margin-top: 5px;" alt="Main Barcode"/>
+                                            <img t-att-src="'/report/barcode/?barcode_type=Code128&amp;value=%s&amp;width=180&amp;height=24' % base_barcode"
+                                                 style="width: 180px; height: 24px; margin-top: 1px;" alt="Main Barcode"/>
                                         </td>
                                     </tr>
 
@@ -106,8 +130,8 @@
                                                 <t t-esc="pkg_barcode"/>
                                             </strong>
                                             <br/>
-                                            <img t-att-src="'/report/barcode/?barcode_type=Code128&amp;value=%s&amp;width=300&amp;height=50' % pkg_barcode"
-                                                 style="width: 300px; height: 50px; margin-top: 5px;" alt="Sub Barcode"/>
+                                            <img t-att-src="'/report/barcode/?barcode_type=Code128&amp;value=%s&amp;width=180&amp;height=24' % pkg_barcode"
+                                                 style="width: 180px; height: 24px; margin-top: 1px;" alt="Sub Barcode"/>
                                         </td>
                                         <td style="padding: 10px; vertical-align: bottom; text-align: right; font-size: 18px;">
                                             <strong>

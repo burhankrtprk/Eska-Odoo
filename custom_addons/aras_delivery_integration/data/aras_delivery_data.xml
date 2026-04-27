@@ -3,7 +3,7 @@
     <data noupdate="1">
 
         <record id="product_product_delivery_aras" model="product.product">
-            <field name="name">Aras Kargo Delivery Fee</field>
+            <field name="name">Aras Kargo Teslimat Bedeli</field>
             <field name="type">service</field>
             <field name="categ_id" ref="delivery.product_category_deliveries"/>
             <field name="sale_ok" eval="False"/>
@@ -12,13 +12,13 @@
         </record>
 
         <record id="aras_packaging_envelope" model="stock.package.type">
-            <field name="name">Aras Envelope / Document</field>
+            <field name="name">Aras Zarf / Belge</field>
             <field name="shipper_package_code">1</field>
             <field name="package_carrier_type">aras</field>
         </record>
 
         <record id="aras_packaging_box" model="stock.package.type">
-            <field name="name">Aras Standard Box</field>
+            <field name="name">Aras Standart Kutu</field>
             <field name="shipper_package_code">2</field>
             <field name="package_carrier_type">aras</field>
         </record>
